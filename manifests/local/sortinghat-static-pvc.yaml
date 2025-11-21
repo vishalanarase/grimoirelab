@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sortinghat-static
+spec:
+  storageClassName: sortinghat-hostpath
+  volumeName: pv-sortinghat-static
+  accessModes:
+    - ReadWriteMany
+

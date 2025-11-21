@@ -1,0 +1,81 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: netsuite-sync
+  namespace: grimoirelab
+  labels:
+    app.kubernetes.io/name: netsuite-sync
+spec:
+  schedule: "0 3 * * 1" # Every Monday at 03:00 UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: netsuite-sync
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: netsuite-sync
+              image: ttl.sh/netsuite-sync-service-1763643543:24h
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: SORTINGHAT_URL
+                  value: "http://grimoirelab-gateway:8000/identities/api/"
+                - name: ORGANIZATION_NAME
+                  value: "Mirantis"
+                - name: SORTINGHAT_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: sortinghat-username
+                - name: SORTINGHAT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: sortinghat-password
+                - name: SORTINGHAT_TENANT
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: sortinghat-tenant
+                      optional: true
+                - name: NETSUITE_ACCOUNT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: netsuite-account-id
+                - name: NETSUITE_CONSUMER_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: netsuite-consumer-key
+                - name: NETSUITE_CONSUMER_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: netsuite-consumer-secret
+                - name: NETSUITE_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: netsuite-token
+                - name: NETSUITE_TOKEN_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: netsuite-token-secret
+                - name: NETSUITE_SCRIPT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: netsuite-script-id
+                - name: NETSUITE_DEPLOY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: netsuite-sync-secrets
+                      key: netsuite-deploy-id
+

@@ -1,0 +1,261 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grimoirelab-config
+  namespace: grimoirelab
+  labels:
+    app.kubernetes.io/name: grimoirelab
+data:
+  setup.cfg: |-
+    [general]
+    short_name = GrimoireLab
+    update = true
+    min_update_delay = 60
+    debug = false
+    logs_dir = /home/grimoire/logs
+    bulk_size = 100
+    scroll_size = 100
+    aliases_file = /home/grimoire/aliases.json
+
+    [projects]
+    projects_file = /home/grimoire/conf/projects.json
+
+    [es_collection]
+    url = https://admin:GrimoireLab.1@opensearch-node1:9200
+
+    [es_enrichment]
+    url = https://admin:GrimoireLab.1@opensearch-node1:9200
+    autorefresh = true
+
+    [sortinghat]
+    host = grimoirelab-gateway
+    user = admin
+    password = admin
+    port = 8000
+    path = /identities/api/
+    ssl = false
+    database = sortinghat_db
+    autoprofile = [github, git]
+    matching = [email,name,username]
+    sleep_for = 100
+    unaffiliated_group = Unknown
+    affiliate = true
+
+    # identities_file = [/home/grimoire/conf/identities.json]
+    # identities_format = sortinghat
+    # load_orgs = true
+    # orgs_file = /home/grimoire/conf/organizations.json
+
+    [panels]
+    kibiter_time_from =
+    kibiter_default_index =
+    kibiter_url =
+    kibiter_version =
+
+    [phases]
+    collection = true
+    identities = true
+    enrichment = true
+    panels = false
+
+    #[bugzillarest]
+    #raw_index = bugzillarest_demo_raw
+    #enriched_index = bugzillarest_demo_enriched
+    #no-archive = true
+
+    #[confluence]
+    #no-archive = true
+    #raw_index = confluence_demo_raw
+    #enriched_index = confluence_demo_enriched
+
+    #[discourse]
+    #raw_index = discourse_demo_raw
+    #enriched_index = discourse_demo_enriched
+    #no-archive = true
+
+    [git]
+    raw_index = git_demo_raw
+    enriched_index = git_demo_enriched
+    latest-items = true
+    studies = [enrich_demography:git, enrich_areas_of_code:git, enrich_onion:git]
+
+    [github]
+    api-token = 
+    raw_index = github_demo_raw
+    sleep-for-rate = true
+    sleep-time = "30"
+    enriched_index = github_demo_enriched
+
+    #[gitlab:issues]
+    #api-token = <YOUR_API_TOKEN_HERE>
+    #raw_index = gitlab_issues_demo_raw
+    #enriched_index = gitlab_issues_demo_enriched
+    #no-archive = true
+    #enterprise-url = <YOUR_GITLAB_INSTANCE_URL>
+    #sleep-for-rate = true
+
+    #[gitlab:merge]
+    #api-token = <YOUR_API_TOKEN_HERE>
+    #raw_index = gitlab_merges_demo_raw
+    #enriched_index = gitlab_merges_demo_enriched
+    #no-archive = true
+    #enterprise-url = <YOUR_GITLAB_INSTANCE_URL>
+    #category = merge_request
+    #sleep-for-rate = true
+
+    #[jira]
+    #raw_index = jira_demo_raw
+    #enriched_index = jira_demo_enriched
+    #no-archive = true
+
+    #[pipermail]
+    #raw_index = pipermail_demo_raw
+    #enriched_index = pipermail_demo_enriched
+    #no-verify = true
+
+    #[mediawiki]
+    #raw_index = mediawiki_demo_raw
+    #enriched_index = mediawiki_demo_enriched
+    #no-archive = true
+
+    #[meetup]
+    #raw_index = meetup_demo_raw
+    #enriched_index = meetup_demo_enriched
+    #api-token = <YOUR_API_TOKEN_WHERE>
+    #no-archive = true
+    #sleep-for-rate = true
+    #sleep-time = "300"
+
+    #[stackexchange]
+    #raw_index = stackexchange_demo_raw
+    #enriched_index = stackexchange_demo_enriched
+    #api-token = <YOUR_API_TOKEN_WHERE>
+    #no-archive = true
+
+    #[slack]
+    #raw_index = slack_demo_raw
+    #enriched_index = slack_demo_enriched
+    #api-token = <YOUR_API_TOKEN_WHERE>
+    #no-archive = true
+
+    #[supybot]
+    #raw_index = supybot_demo_raw
+    #enriched_index = supybot_demo_enriched
+
+    #[twitter]
+    #raw_index = twitter_demo_raw
+    #enriched_index = twitter_demo_enriched
+    #api-token = <YOUR_API_TOKEN_WHERE>
+    #no-archive = true
+    #sleep-for-rate = true
+    #sleep-time = 300
+
+    ## studies based on enriched indexes
+
+    [enrich_demography:git]
+
+    [enrich_areas_of_code:git]
+    in_index = git_demo_raw
+    out_index = git-aoc_demo_enriched
+
+    [enrich_onion:git]
+    in_index = git
+    out_index = git-onion_demo_enriched
+    contribs_field = hash
+
+  projects.json: |-
+    {
+        "Kubernetes": {
+          "git": [
+            "https://github.com/kubernetes-sigs/cluster-api.git"
+          ],
+          "github": [
+            "https://github.com/kubernetes-sigs/cluster-api"
+          ]
+         },
+        "K0rdent": {
+          "git": [
+              "https://github.com/k0rdent/k0rdent.git",
+              "https://github.com/k0rdent/kcm.git"
+          ],
+          "github": [
+              "https://github.com/k0rdent/k0rdent",
+              "https://github.com/k0rdent/kcm"
+          ]
+        },
+        "K0s": {
+          "git": [
+              "https://github.com/k0sproject/k0s.git",
+              "https://github.com/k0sproject/k0sctl.git",
+              "https://github.com/k0sproject/k0smotron.git"
+          ],
+          "github": [
+              "https://github.com/k0sproject/k0s",
+              "https://github.com/k0sproject/k0sctl",
+              "https://github.com/k0sproject/k0smotron"
+          ]
+        }
+      }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grimoirelab-nginx-templates
+  namespace: grimoirelab
+  labels:
+    app.kubernetes.io/name: grimoirelab
+data:
+  nginx.conf.template: |-
+
+    upstream sortinghat {
+      server sortinghat:9314;
+    }
+    server {
+      include    mime.types;
+      sendfile on;
+      listen 8000;
+
+      server_name localhost nginx;
+
+      location / {
+          proxy_pass ${KIBANA_HOST};
+          proxy_redirect ${KIBANA_HOST} /;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection 'upgrade';
+          proxy_set_header Host $host;
+          proxy_cache_bypass $http_upgrade;
+      }
+
+      location /identities {
+          rewrite ^/identities/(.*) /$1 break;
+
+          include /etc/nginx/uwsgi_params;
+          uwsgi_pass sortinghat;
+          uwsgi_param Host $host;
+          uwsgi_param X-Real-IP $remote_addr;
+          uwsgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
+          uwsgi_param X-Forwarded-Proto $http_x_forwarded_proto;
+      }
+
+      location ~ ^/identities/(css|js|fonts)/ {
+        rewrite ^/identities/(.*) /$1 break;
+
+        root /sortinghat;
+      }
+    }
+  uwsgi_params: |-
+    uwsgi_param QUERY_STRING $query_string;
+    uwsgi_param REQUEST_METHOD $request_method;
+    uwsgi_param CONTENT_TYPE $content_type;
+    uwsgi_param CONTENT_LENGTH $content_length;
+    uwsgi_param REQUEST_URI $request_uri;
+    uwsgi_param PATH_INFO $document_uri;
+    uwsgi_param DOCUMENT_ROOT $document_root;
+    uwsgi_param SERVER_PROTOCOL $server_protocol;
+    uwsgi_param HTTPS $https if_not_empty;
+    uwsgi_param REMOTE_ADDR $remote_addr;
+    uwsgi_param REMOTE_PORT $remote_port;
+    uwsgi_param SERVER_PORT $server_port;
+    uwsgi_param SERVER_NAME $server_name;
+
