@@ -10,12 +10,17 @@ spec:
   type: LoadBalancer
   ports:
     - name: http
+      port: 80
+      targetPort: 80
+    - name: https
+      port: 443
+      targetPort: 443
+    - name: legacy-http
       port: 8000
       targetPort: 8000
   selector:
     app.kubernetes.io/name: grimoirelab
     app.kubernetes.io/component: nginx
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,6 +45,8 @@ spec:
         - name: nginx
           image: nginx:latest
           ports:
+            - containerPort: 80
+            - containerPort: 443
             - containerPort: 8000
           env:
             - name: KIBANA_HOST
@@ -47,7 +54,8 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: 8000
+              port: 443
+              scheme: HTTPS
             initialDelaySeconds: 20
             periodSeconds: 10
           volumeMounts:
@@ -60,6 +68,10 @@ spec:
             - name: sortinghat-static
               mountPath: /sortinghat
               readOnly: true
+              subPath: ""
+            - name: tls-cert
+              mountPath: /etc/nginx/tls
+              readOnly: true
       volumes:
         - name: nginx-template
           configMap:
@@ -67,4 +79,7 @@ spec:
         - name: sortinghat-static
           persistentVolumeClaim:
             claimName: sortinghat-static
+        - name: tls-cert
+          secret:
+            secretName: grimoirelab-tls
 

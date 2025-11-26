@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: netsuite-sync
 spec:
   schedule: "0 3 * * 1" # Every Monday at 03:00 UTC
+  suspend: false
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
@@ -20,7 +21,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: netsuite-sync
-              image: ttl.sh/netsuite-sync-service-1763643543:24h
+              image: ttl.sh/netsuite-sync-service-20251125:24h
               imagePullPolicy: IfNotPresent
               env:
                 - name: SORTINGHAT_URL

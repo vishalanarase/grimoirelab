@@ -8,6 +8,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: managed-premium  # Azure Premium SSD for RWO volumes
   resources:
     requests:
       storage: 20Gi
@@ -22,6 +23,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: managed-premium  # Azure Premium SSD for RWO volumes
   resources:
     requests:
       storage: 5Gi
@@ -36,6 +38,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: managed-premium  # Azure Premium SSD for RWO volumes
   resources:
     requests:
       storage: 50Gi
@@ -50,9 +53,8 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
+  storageClassName: azurefile-csi  # Azure File for RWX volumes (required for shared SortingHat static assets)
   resources:
     requests:
       storage: 1Gi
-  storageClassName: sortinghat-hostpath
-  volumeName: pv-sortinghat-static
 

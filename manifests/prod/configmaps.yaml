@@ -210,12 +210,23 @@ data:
     upstream sortinghat {
       server sortinghat:9314;
     }
+
+    server {
+      listen 80;
+      server_name _;
+      return 301 https://$host$request_uri;
+    }
+
     server {
       include    mime.types;
       sendfile on;
-      listen 8000;
+      listen 443 ssl;
+      server_name _;
 
-      server_name localhost nginx;
+      ssl_certificate     /etc/nginx/tls/tls.crt;
+      ssl_certificate_key /etc/nginx/tls/tls.key;
+      ssl_protocols       TLSv1.2 TLSv1.3;
+      ssl_ciphers         HIGH:!aNULL:!MD5;
 
       location / {
           proxy_pass ${KIBANA_HOST};
@@ -224,6 +235,7 @@ data:
           proxy_set_header Upgrade $http_upgrade;
           proxy_set_header Connection 'upgrade';
           proxy_set_header Host $host;
+          proxy_set_header X-Forwarded-Proto https;
           proxy_cache_bypass $http_upgrade;
       }
 
@@ -235,7 +247,42 @@ data:
           uwsgi_param Host $host;
           uwsgi_param X-Real-IP $remote_addr;
           uwsgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
-          uwsgi_param X-Forwarded-Proto $http_x_forwarded_proto;
+          uwsgi_param X-Forwarded-Proto https;
+      }
+
+      location ~ ^/identities/(css|js|fonts)/ {
+        rewrite ^/identities/(.*) /$1 break;
+
+        root /sortinghat;
+      }
+    }
+
+    server {
+      include    mime.types;
+      sendfile on;
+      listen 8000;
+      server_name _;
+
+      location / {
+          proxy_pass ${KIBANA_HOST};
+          proxy_redirect ${KIBANA_HOST} /;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection 'upgrade';
+          proxy_set_header Host $host;
+          proxy_set_header X-Forwarded-Proto http;
+          proxy_cache_bypass $http_upgrade;
+      }
+
+      location /identities {
+          rewrite ^/identities/(.*) /$1 break;
+
+          include /etc/nginx/uwsgi_params;
+          uwsgi_pass sortinghat;
+          uwsgi_param Host $host;
+          uwsgi_param X-Real-IP $remote_addr;
+          uwsgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
+          uwsgi_param X-Forwarded-Proto http;
       }
 
       location ~ ^/identities/(css|js|fonts)/ {
@@ -259,3 +306,18 @@ data:
     uwsgi_param SERVER_PORT $server_port;
     uwsgi_param SERVER_NAME $server_name;
 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sortinghat-extra-settings
+  namespace: grimoirelab
+  labels:
+    app.kubernetes.io/name: grimoirelab
+data:
+  custom_settings.py: |-
+    from sortinghat.config.settings import *  # noqa
+
+    # Ensure cookies are only sent over HTTPS now that the gateway terminates TLS.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
