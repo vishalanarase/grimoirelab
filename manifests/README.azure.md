@@ -59,6 +59,23 @@ kubectl apply -k manifests/prod
 
 This applies all Deployments, Services, CronJobs, and PVCs in one shot.
 
+### 5b. Demo namespace with TLS gateway (AKS-friendly)
+
+The `manifests/demo` overlay provisions the same stack in a `demo` namespace, switches persistent volumes to AKS storage classes, adds an allow-all `NetworkPolicy`, and exposes the NGINX gateway on HTTPS (port 443).
+
+1. Provide a TLS cert/key by copying `manifests/demo/gateway-tls-secret.example.yaml` to a safe location, replace the placeholders, and apply it:
+   ```bash
+   kubectl apply -f manifests/demo/gateway-tls-secret.example.yaml
+   ```
+2. Deploy the namespace:
+   ```bash
+   kubectl apply -f manifests/demo/namespace.yaml
+   kubectl apply -k manifests/demo
+   ```
+3. Update consumers (e.g., NetSuite sync) to call `https://grimoirelab-gateway.demo.svc.cluster.local:443` or the LoadBalancer IP.
+
+All internal services communicate inside the namespace via the permissive `NetworkPolicy`, while external access uses TLS termination at the gateway.
+
 ### 6. Networking
 
 - `manifests/prod/nginx.yaml` uses a `LoadBalancer` Service on port 8000. AKS will provision an Azure Standard LB automatically; note the public IP with:

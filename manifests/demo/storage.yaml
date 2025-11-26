@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-data
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: grimoirelab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: managed-premium
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: valkey-data
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: grimoirelab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: managed-premium
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-data
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: grimoirelab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: managed-premium
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sortinghat-static
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: grimoirelab
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: azurefile-csi
+
