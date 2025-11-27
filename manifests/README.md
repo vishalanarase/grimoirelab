@@ -3,119 +3,134 @@
 This directory contains the Kubernetes specs for running the GrimoireLab stack
 via Kustomize. It mirrors the docker-compose topology (MariaDB, Valkey,
 OpenSearch + Dashboards, SortingHat API/worker, Mordred, and an Nginx gateway)
-and is organized into reusable bases and overlays.
+and is organized following Kustomize best practices with a base and overlays.
 
 ## Layout
 
 | Path | Description |
 |------|-------------|
-| `prod/` | Base manifests intended for remote/production clusters |
-| `local/` | KIND overlay and helper files for workstation smoke-tests |
+| `base/` | Common base manifests with core resources grouped by type |
+| `overlays/local/` | KIND overlay for local development and testing |
+| `overlays/prod/` | Production overlay for remote clusters |
+| `overlays/demo/` | Demo overlay for AKS deployment |
 
 Every folder includes its own `kustomization.yaml`, so you can `kubectl apply -k`
 or `kubectl delete -k` without touching individual files.
 
+## Base Structure
+
+The `base/` directory contains common resources organized by type:
+
+- `namespace/` - Namespace definition
+- `config/` - ConfigMaps for application configuration
+- `storage/` - PersistentVolumeClaims
+- `databases/` - MariaDB and Valkey (Redis)
+- `opensearch/` - OpenSearch and OpenSearch Dashboards
+- `apps/` - SortingHat and Mordred applications
+- `networking/` - Nginx gateway and network policies
+- `cronjobs/` - NetSuite sync CronJob
+
 ## Requirements
 
 1. Kubernetes 1.24+ and `kubectl` access.
-2. Storage classes that fulfil the PVCs defined in `prod/storage.yaml`
+2. Storage classes that fulfil the PVCs defined in `base/storage/`
    (`ReadWriteOnce` for DB/cache/search data plus `ReadWriteMany` for the
    shared SortingHat static assets).
 3. Nodes configured with `vm.max_map_count=262144` before scheduling OpenSearch.
 4. Docker + KIND only if you intend to use the local overlay.
 
-## Deploy to a cluster (`prod/`)
+## Quick Start
+
+### Local Development (KIND)
 
 ```bash
-cd /Users/vishal/worktest/grimoirelab
+# Create local directory for volumes
+mkdir -p /tmp/grimoirelab
 
-# Namespace + secrets (replace example values before shared deployments)
-kubectl apply -f manifests/prod/namespace.yaml
-kubectl apply -f manifests/prod/secrets.example.yaml   # or kubectl create secret …
+# Create KIND cluster
+kind create cluster --name grimoirelab --config manifests/overlays/local/kind-cluster.yaml
+
+# Create secrets
+kubectl create secret generic grimoirelab-secrets \
+  --namespace grimoirelab \
+  --from-literal=mysql-root-password='local-root' \
+  --from-literal=sortinghat-db-password='local-root' \
+  --from-literal=sortinghat-superuser-password='admin' \
+  --from-literal=sortinghat-secret-key='change-me' \
+  --from-literal=opensearch-initial-admin-password='GrimoireLab.1'
 
 # Deploy the stack
-kubectl apply -k manifests/prod
+kubectl apply -k manifests/overlays/local
 ```
 
-Key files in `prod/`:
+Access the stack at `http://localhost:8000/`
 
-- `configmaps.yaml` – embeds the default `setup.cfg`, `projects.json`,
-  and Nginx templates from `default-grimoirelab-settings`.
-- `storage.yaml` – PVCs matching the docker-compose volumes.
-- `secrets.example.yaml` – documents the required keys; copy and customize for
-  anything beyond local testing.
-- `mariadb.yaml`, `opensearch.yaml`, `sortinghat.yaml`, and `mordred.yaml`
-  include all fixes needed for production (empty MariaDB password handling,
-  authenticated OpenSearch probes, routing SortingHat traffic through
-  `grimoirelab-gateway`, etc.), so `kubectl apply -k manifests/prod` works
-  as-is on any Kubernetes cluster that meets the requirements above.
-- `netsuite-sync-cronjob.yaml` – optional weekly CronJob that syncs
-  organizations/users from NetSuite into SortingHat once the accompanying Secret
-  (`netsuite-sync-secrets.example.yaml`) is populated.
+See `manifests/overlays/local/README.md` for detailed instructions.
 
-## Local KIND overlay (`local/`)
-
-The overlay keeps the same workloads but adapts the plumbing:
-
-- `kind-cluster.yaml` exposes host port 8000 and bind-mounts `/tmp/grimoirelab`.
-- `storage-hostpath.yaml` and `sortinghat-static-pvc.yaml` provide an RWX host
-  path for SortingHat static files so Nginx can serve them too.
-- `nginx-nodeport.yaml` flips the gateway Service to `NodePort` 30080.
-
-Quick start:
+### Production Deployment
 
 ```bash
-mkdir -p /tmp/grimoirelab
-kind create cluster --name grimoirelab --config manifests/local/kind-cluster.yaml
-kubectl apply -f manifests/prod/namespace.yaml
-kubectl apply -f manifests/prod/secrets.example.yaml   # or create your own Secret
-kubectl apply -k manifests/local
+# Deploy to production cluster
+kubectl apply -k manifests/overlays/prod
 ```
 
-See `manifests/local/README.md` for the full workflow and teardown commands.
+See `manifests/overlays/prod/README.md` for detailed instructions.
 
-## Customization & verification
+### Demo Deployment (AKS)
 
-- Update `configmaps.yaml` whenever you change `setup.cfg` or `projects.json`.
-- Replace inline secrets with references to Kubernetes Secrets or your preferred
-  secret manager.
-- Tweak resource requests/limits or add node selectors/taints per workload to
-  fit your cluster.
-- Swap the gateway Service type in `prod/nginx.yaml` if LoadBalancer IPs are not
-  available (NodePort + Ingress works well).
+```bash
+# Deploy to demo environment
+kubectl apply -k manifests/overlays/demo
+```
+
+See `manifests/overlays/demo/README.md` for detailed instructions.
+
+## Customization
+
+Each overlay can be customized by:
+
+1. **ConfigMaps**: Edit `setup.cfg` and `projects.json` in the overlay directory
+2. **Secrets**: Create environment-specific secrets (see `secrets.example.yaml`)
+3. **Storage**: Adjust storage classes in `storage-patches.yaml`
+4. **Resources**: Add resource requests/limits via patches
+5. **Networking**: Modify service types and ingress configuration
+
+## Verification
 
 Basic health checks:
 
 ```bash
-kubectl get pods -n grimoirelab
-kubectl logs deploy/mordred -n grimoirelab -f
-kubectl port-forward svc/opensearch-node1 -n grimoirelab 9200:9200
+# Check pod status
+kubectl get pods -n <namespace>
+
+# View Mordred logs
+kubectl logs deploy/mordred -n <namespace> -f
+
+# Check OpenSearch health
+kubectl port-forward svc/opensearch-node1 -n <namespace> 9200:9200
 curl -k https://admin:<password>@localhost:9200/_cluster/health
 ```
 
 If every pod reports `1/1 Running` and the Mordred logs show data
-collection progress, the production stack is ready. If you redeploy with
-`kubectl apply -k manifests/prod`, no additional manual tweaks are
-required—the manifests already encode the fixes applied during testing.
-
-Delete the stack with `kubectl delete -k manifests/prod` (PVCs remain until you
-remove them manually). Iterate locally with the KIND overlay, then promote the
-same base manifests to your target cluster.
+collection progress, the stack is ready.
 
 ## NetSuite → SortingHat sync (optional)
 
 1. Build and push the helper image (from `netsuite-sync-service/`):
    ```bash
-   cd /Users/vishal/worktest/netsuite-sync-service
    docker build -t ghcr.io/<org>/netsuite-sync-service:latest .
    docker push ghcr.io/<org>/netsuite-sync-service:latest
    ```
-2. Create the Secret with your SortingHat + NetSuite credentials. Use
-   `netsuite-sync-secrets.example.yaml` as a template, then `kubectl apply -f`.
-3. Deploy the CronJob (already part of `kubectl apply -k manifests/prod`). By
-   default it runs every Monday at 03:00 UTC, calling the internal SortingHat
-   API via `grimoirelab-gateway`.
+2. Create the Secret with your SortingHat + NetSuite credentials:
+   ```bash
+   kubectl apply -f manifests/overlays/<env>/netsuite-sync-secrets.example.yaml
+   ```
+3. Deploy the CronJob (already part of `kubectl apply -k`). By
+   default it runs every Monday at 03:00 UTC.
 
-Adjust the schedule, organization name, or image tag inside
-`netsuite-sync-cronjob.yaml` as needed for your environment.***
+## Additional Documentation
 
+- `manifests/overlays/local/README.md` - Local KIND deployment guide
+- `manifests/overlays/demo/README.md` - Demo environment guide
+- `manifests/overlays/demo/README.dns.md` - DNS configuration guide
+- `manifests/README.azure.md` - Azure-specific deployment notes

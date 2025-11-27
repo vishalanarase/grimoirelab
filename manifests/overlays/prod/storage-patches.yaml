@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-data
+spec:
+  storageClassName: managed-premium
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: valkey-data
+spec:
+  storageClassName: managed-premium
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-data
+spec:
+  storageClassName: managed-premium
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sortinghat-static
+spec:
+  storageClassName: azurefile-csi
+

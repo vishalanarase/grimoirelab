@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: grimoirelab
+
+resources:
+  - ../../base
+  - storage-hostpath.yaml
+
+# Patch namespace name in base
+patches:
+  - target:
+      kind: Service
+      name: grimoirelab-gateway
+    path: nginx-nodeport.yaml
+  - target:
+      kind: PersistentVolumeClaim
+      name: sortinghat-static
+    path: sortinghat-static-pvc.yaml
+
+# Storage class patches for local hostpath
+patches:
+  - path: storage-patches.yaml
+
+configMapGenerator:
+  - name: grimoirelab-config
+    behavior: merge
+    files:
+      - setup.cfg
+      - projects.json
+

@@ -1,0 +1,11 @@
+{
+    "Example": {
+      "git": [
+        "https://github.com/example/example.git"
+      ],
+      "github": [
+        "https://github.com/example/example"
+      ]
+     }
+  }
+

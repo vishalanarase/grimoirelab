@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: grimoirelab
+
+resources:
+  - ../../base
+
+
+# Storage class patches for Azure
+patches:
+  - path: storage-patches.yaml
+
+configMapGenerator:
+  - name: grimoirelab-config
+    behavior: merge
+    files:
+      - projects.json

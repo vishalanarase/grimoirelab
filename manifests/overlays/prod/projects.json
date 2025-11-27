@@ -1,0 +1,33 @@
+{
+    "Kubernetes": {
+      "git": [
+        "https://github.com/kubernetes-sigs/cluster-api.git"
+      ],
+      "github": [
+        "https://github.com/kubernetes-sigs/cluster-api"
+      ]
+     },
+    "K0rdent": {
+      "git": [
+          "https://github.com/k0rdent/k0rdent.git",
+          "https://github.com/k0rdent/kcm.git"
+      ],
+      "github": [
+          "https://github.com/k0rdent/k0rdent",
+          "https://github.com/k0rdent/kcm"
+      ]
+    },
+    "K0s": {
+      "git": [
+          "https://github.com/k0sproject/k0s.git",
+          "https://github.com/k0sproject/k0sctl.git",
+          "https://github.com/k0sproject/k0smotron.git"
+      ],
+      "github": [
+          "https://github.com/k0sproject/k0s",
+          "https://github.com/k0sproject/k0sctl",
+          "https://github.com/k0sproject/k0smotron"
+      ]
+    }
+  }
+
