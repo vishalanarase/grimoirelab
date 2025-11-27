@@ -1,0 +1,23 @@
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Secrets and sensitive configuration
+*secret*.yaml
+!*secret*.example.yaml
+*.env
+.env*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
