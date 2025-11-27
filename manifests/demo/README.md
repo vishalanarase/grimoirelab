@@ -41,6 +41,8 @@ healthy.
 - **OpenSearch Dashboards** – exposed via the same LoadBalancer at `https://<LB-IP>/` (over the
   Kibana path) after NGINX proxies to the internal service.
 
+**Using a DNS domain name?** See [README.dns.md](README.dns.md) for configuration changes required when migrating from a LoadBalancer IP to a custom domain.
+
 ## Notes
 
 - Internal components (Mordred, SortingHat worker, NetSuite sync) communicate with SortingHat over
